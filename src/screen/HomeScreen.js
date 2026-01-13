@@ -149,7 +149,7 @@ export default function HomeScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           <View style={styles.welcomeSection}>
             <Text style={styles.dateLabel}>{currentDate}</Text>
-            <Text style={styles.welcomeText} numberOfLines={1}>Hello, Dave</Text>
+            <Text style={styles.welcomeText} numberOfLines={1}>Hello, Chano</Text>
           </View>
 
           <View style={styles.miniInsight}>

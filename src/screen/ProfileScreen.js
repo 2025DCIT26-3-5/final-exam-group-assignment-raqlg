@@ -33,7 +33,7 @@ export default function ProfileScreen() {
               <Text style={styles.editText}>EDIT</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>Dave Arnuco</Text>
+          <Text style={styles.userName}>Christian Arnuco</Text>
           <Text style={styles.userID}>Patient ID: #2026-001</Text>
         </View>
 
@@ -45,11 +45,11 @@ export default function ProfileScreen() {
             <View style={styles.emergencyRow}>
               <View style={styles.emItem}>
                 <Text style={styles.emLabel}>Blood Type</Text>
-                <Text style={styles.emValue}>O+</Text>
+                <Text style={styles.emValue}>A/B</Text>
               </View>
               <View style={styles.emItem}>
                 <Text style={styles.emLabel}>Allergies</Text>
-                <Text style={styles.emValue}>Penicillin</Text>
+                <Text style={styles.emValue}>Kay Kinit</Text>
               </View>
             </View>
             
@@ -58,7 +58,7 @@ export default function ProfileScreen() {
             <View style={styles.emergencyRow}>
               <View style={styles.emItem}>
                 <Text style={styles.emLabel}>Emergency Contact</Text>
-                <Text style={styles.emValue}>Maria (Wife)</Text>
+                <Text style={styles.emValue}>Jeremy (TODA)</Text>
                 <Text style={styles.emPhone}>0912-345-6789</Text>
               </View>
               <TouchableOpacity style={styles.callBtn} activeOpacity={0.7}>
