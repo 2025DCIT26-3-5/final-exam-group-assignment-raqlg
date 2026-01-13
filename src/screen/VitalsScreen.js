@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Heart, Activity, Plus, Trash2 } from 'lucide-react-native';
 import AddVitalModal from '../components/AddVitalModal';
-import { supabase } from '../lib/supabase'; // Siguraduhing tama ang path
+import { supabase } from '../lib/supabase'; 
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,7 +23,6 @@ export default function VitalsScreen() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. Load vitals data mula sa Supabase
   useEffect(() => {
     fetchVitals();
   }, []);
@@ -45,7 +44,7 @@ export default function VitalsScreen() {
     }
   };
 
-  // 2. I-save ang bagong vital record
+
   const onSave = async (type, value) => {
     try {
       const { data, error } = await supabase
@@ -64,7 +63,6 @@ export default function VitalsScreen() {
     }
   };
 
-  // 3. Burahin ang vital record
   const deleteVital = async (id) => {
     try {
       const { error } = await supabase
@@ -79,7 +77,6 @@ export default function VitalsScreen() {
     }
   };
 
-  // Helper function para sa formatting ng date/time mula sa database
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
