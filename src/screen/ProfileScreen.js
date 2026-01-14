@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -9,21 +9,89 @@ import {
   StatusBar,
   Switch,
   Platform,
-  Dimensions 
+  Dimensions,
+  ActivityIndicator,
+  Alert 
 } from 'react-native';
 import { User, ShieldAlert, Phone, LogOut, ChevronRight, Settings } from 'lucide-react-native';
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const [notifications, setNotifications] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState({ 
+    full_name: 'User Name', 
+    email: '' 
+  });
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) throw authError;
+
+      if (user) {
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (data && data.full_name) {
+          // Kung nahanap sa database table (public.users)
+          setUserData({
+            full_name: data.full_name,
+            email: user.email || ''
+          });
+        } else {
+
+          setUserData({
+            full_name: user.user_metadata?.full_name || 'No Name Set',
+            email: user.email || ''
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) Alert.alert('Error', error.message);
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
-        {/* Profile Header - Responsive Design */}
+        {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
@@ -33,8 +101,16 @@ export default function ProfileScreen() {
               <Text style={styles.editText}>EDIT</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>Christian Arnuco</Text>
-          <Text style={styles.userID}>Patient ID: #2026-001</Text>
+
+          {/* User Information Section */}
+          {loading ? (
+            <ActivityIndicator size="small" color="#4F46E5" style={{ marginTop: 10 }} />
+          ) : (
+            <>
+              <Text style={styles.userName}>{userData.full_name}</Text>
+              <Text style={styles.userID}>{userData.email}</Text>
+            </>
+          )}
         </View>
 
         <View style={styles.content}>
@@ -94,7 +170,11 @@ export default function ProfileScreen() {
           </View>
 
           {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.5}>
+          <TouchableOpacity 
+            style={styles.logoutBtn} 
+            activeOpacity={0.5} 
+            onPress={handleSignOut}
+          >
             <LogOut color="#EF4444" size={20} />
             <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
@@ -107,13 +187,8 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { 
-    flex: 1, 
-    backgroundColor: '#FFFFFF' 
-  },
-  scrollContent: {
-    paddingBottom: 40
-  },
+  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
+  scrollContent: { paddingBottom: 40 },
   header: { 
     alignItems: 'center', 
     paddingTop: Platform.OS === 'android' ? 40 : 20,
@@ -121,22 +196,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', 
     borderBottomLeftRadius: 40, 
     borderBottomRightRadius: 40,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
-  avatarContainer: { 
-    position: 'relative', 
-    marginBottom: 15 
-  },
+  avatarContainer: { position: 'relative', marginBottom: 15 },
   avatar: { 
     width: width * 0.25, 
     height: width * 0.25, 
@@ -158,25 +224,10 @@ const styles = StyleSheet.create({
     borderWidth: 3, 
     borderColor: 'white' 
   },
-  editText: { 
-    color: 'white', 
-    fontSize: 10, 
-    fontWeight: '800' 
-  },
-  userName: { 
-    fontSize: width * 0.06, 
-    fontWeight: 'bold', 
-    color: '#1E293B' 
-  },
-  userID: { 
-    fontSize: 13, 
-    color: '#64748B', 
-    marginTop: 4 
-  },
-  content: { 
-    paddingHorizontal: 20,
-    paddingTop: 25
-  },
+  editText: { color: 'white', fontSize: 10, fontWeight: '800' },
+  userName: { fontSize: width * 0.06, fontWeight: 'bold', color: '#1E293B' },
+  userID: { fontSize: 13, color: '#64748B', marginTop: 4 },
+  content: { paddingHorizontal: 20, paddingTop: 25 },
   sectionLabel: { 
     fontSize: 12, 
     fontWeight: '800', 
@@ -192,35 +243,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderColor: '#FECDD3' 
   },
-  emergencyRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center' 
-  },
-  emItem: { 
-    flex: 1 
-  },
-  emLabel: { 
-    fontSize: 11, 
-    color: '#E11D48', 
-    fontWeight: '700' 
-  },
-  emValue: { 
-    fontSize: 16, 
-    fontWeight: '800', 
-    color: '#881337', 
-    marginTop: 2 
-  },
-  emPhone: { 
-    fontSize: 12, 
-    color: '#BE123C', 
-    marginTop: 2 
-  },
-  divider: { 
-    height: 1, 
-    backgroundColor: '#FEE2E2', 
-    marginVertical: 15 
-  },
+  emergencyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  emItem: { flex: 1 },
+  emLabel: { fontSize: 11, color: '#E11D48', fontWeight: '700' },
+  emValue: { fontSize: 16, fontWeight: '800', color: '#881337', marginTop: 2 },
+  emPhone: { fontSize: 12, color: '#BE123C', marginTop: 2 },
+  divider: { height: 1, backgroundColor: '#FEE2E2', marginVertical: 15 },
   callBtn: { 
     backgroundColor: '#E11D48', 
     width: 44, 
@@ -243,34 +271,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, 
     borderBottomColor: '#F8FAFC' 
   },
-  iconBox: { 
-    padding: 10, 
-    borderRadius: 12, 
-    marginRight: 15 
-  },
-  settingText: { 
-    flex: 1, 
-    fontSize: 15, 
-    fontWeight: '600', 
-    color: '#1E293B' 
-  },
-  logoutBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginTop: 30, 
-    padding: 10 
-  },
-  logoutText: { 
-    marginLeft: 10, 
-    fontSize: 16, 
-    fontWeight: 'bold', 
-    color: '#EF4444' 
-  },
-  versionText: { 
-    textAlign: 'center', 
-    color: '#CBD5E1', 
-    fontSize: 12, 
-    marginTop: 15 
-  }
+  iconBox: { padding: 10, borderRadius: 12, marginRight: 15 },
+  settingText: { flex: 1, fontSize: 15, fontWeight: '600', color: '#1E293B' },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30, padding: 10 },
+  logoutText: { marginLeft: 10, fontSize: 16, fontWeight: 'bold', color: '#EF4444' },
+  versionText: { textAlign: 'center', color: '#CBD5E1', fontSize: 12, marginTop: 15 }
 });
